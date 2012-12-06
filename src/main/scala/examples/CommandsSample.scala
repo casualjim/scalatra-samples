@@ -17,20 +17,26 @@ object TodosHandler extends CommandHandler {
   protected def handle: Handler = {
     case c: CreateTodoForm =>
       allCatch opt {
-        TodoStore.save(Todo(~c.name.value, done = ~c.done.value)).successNel
+        val nt = Todo(~c.name.value, done = ~c.done.value)
+        TodoStore.save(nt)
+        nt.successNel[ValidationError]
       } getOrElse ValidationError("Unknown error").failNel
 
     case c: UpdateTodoForm =>
       allCatch opt {
         TodoStore.get(~c.id.value) map { todo =>
-          TodoStore.save(todo.copy(name = ~c.name.value, done = c.done.value.getOrElse(todo.done))).successNel
+          val nt = todo.copy(name = ~c.name.value, done = c.done.value.getOrElse(todo.done))
+          TodoStore.save(nt)
+          nt.successNel
         } getOrElse ValidationError("Not found", NotFound).failNel
       } getOrElse ValidationError("Unknown error", ServerError).failNel
 
     case c: ToggleDoneForm =>
       allCatch opt {
         TodoStore.get(~c.id.value) map { todo =>
-          TodoStore.save(todo.copy(done = c.done.value.getOrElse(todo.done))).successNel
+          val nt = todo.copy(done = c.done.value.getOrElse(todo.done))
+          TodoStore.save(nt)
+          nt.successNel
         } getOrElse ValidationError("Not found", NotFound).failNel
       } getOrElse ValidationError("Unknown error", ServerError).failNel
   }
@@ -71,10 +77,8 @@ object CommandsSample {
    *     val done: Field[Boolean] = bind[Boolean]("done").withDefaultValue(false)
    *   }
    * </pre>
-   *
-   * @param jsonFormats the json formats
    */
-  class CreateTodoForm(implicit jsonFormats: Formats) extends TodoForm with TodoFields
+  class CreateTodoForm extends TodoForm with TodoFields
 
   /**
    * A command that updates a todo item
@@ -86,10 +90,8 @@ object CommandsSample {
    *     val done: Field[Boolean] = bind[Boolean]("done").withDefaultValue(false)
    *   }
    * </pre>
-   *
-   * @param jsonFormats the json formats
    */
-  class UpdateTodoForm(implicit jsonFormats: Formats) extends TodoForm with IdField with TodoFields
+  class UpdateTodoForm extends TodoForm with IdField with TodoFields
 
   /**
    * A command that toggles the done field a todo item
@@ -100,10 +102,8 @@ object CommandsSample {
    *     val done: Field[Boolean] = bind[Boolean]("done").withDefaultValue(false)
    *   }
    * </pre>
-   *
-   * @param jsonFormats the json formats
    */
-  class ToggleDoneForm(implicit jsonFormats: Formats) extends TodoForm with IdField with DoneField
+  class ToggleDoneForm extends TodoForm with IdField with DoneField
 
 }
 class CommandsSample extends ScalatraServlet with TypedParamSupport with ScalateSupport with JacksonJsonParsing with JacksonJsonSupport {
@@ -113,14 +113,14 @@ class CommandsSample extends ScalatraServlet with TypedParamSupport with Scalate
 
   get("/") {
     contentType="text/html"
-    ssp("/todos/index", "todos" -> TodoStore.all, "remaining" -> TodoStore.remaining)
+    ssp("/todos/index", "layout" -> "/WEB-INF/layouts/todos", "todos" -> TodoStore.all, "remaining" -> TodoStore.remaining)
   }
 
-  post("/todos") {
+  post("/") {
     val cmd = command[CreateTodoForm]
     TodosHandler.execute(cmd).fold(
       errors => halt(400, errors),
-      todo => redirect("/")
+      todo => redirect("/todos")
     )
   }
 

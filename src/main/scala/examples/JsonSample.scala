@@ -36,7 +36,7 @@ object TodoStore {
 
   def all: List[Todo] = store.values.toList
 
-  def remaining: List[Todo] = store.values.filterNot(_.done).toList
+  def remaining: Int = store.values.count(!_.done)
 
   def apply(id: Int) = store(id)
 
