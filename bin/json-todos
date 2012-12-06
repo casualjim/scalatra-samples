@@ -1,0 +1,19 @@
+#!/bin/zsh
+
+#!/bin/zsh
+
+cmd='http localhost:8080/json'
+echo "Executing ${cmd}"
+sh -c $cmd
+
+echo 
+echo 
+
+mark_done='http PUT localhost:8080/json/4 done:=true \'name:="Show JSON"\''
+echo "Executing ${mark_done}"
+sh -c $mark_done
+
+echo
+echo
+
+#delete_zombies='http DELETE localhost:8008'

@@ -1,0 +1,5 @@
+#!/bin/zsh
+
+cmd='http localhost:8080/hello/ivan'
+echo "Executing ${cmd}"
+sh -c ${cmd}
